@@ -1,0 +1,144 @@
+:root {
+  --primary: #6366f1;
+  --secondary: #a855f7;
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --text-color: #ffffff;
+  --text-muted: #e2e8f0;
+  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  color: var(--text-color);
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Center for desktop */
+}
+
+#root {
+  width: 100%;
+  max-width: 480px; /* Mobile compact view container */
+  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--card-shadow);
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Glassmorphism Utilities */
+.glass-card {
+  background: var(--glass-bg);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+/* Utilities */
+.container {
+  padding: 24px;
+  padding-bottom: 80px; /* Bottom nav spacing */
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5em;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: transform 0.1s, opacity 0.2s;
+  width: 100%;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: white;
+  color: var(--primary);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  margin-bottom: 16px;
+  font-size: 16px;
+  outline: none;
+}
+
+input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+/* Animation */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0; 
+  right: 0;
+  height: 60px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  width: 100%; /* Relative to #root if we force position relative on root? No fixed is relative to viewport */
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.nav-item {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav-item.active {
+  color: white;
+  font-weight: 600;
+}
