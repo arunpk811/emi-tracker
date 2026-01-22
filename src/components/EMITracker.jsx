@@ -17,7 +17,6 @@ export default function EMITracker() {
         const q = query(
             collection(db, 'emis'),
             where("uid", "==", auth.currentUser.uid)
-            // orderBy("date", "desc") // Requires index in Firestore, skipping for simple no-index start
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -51,42 +50,64 @@ export default function EMITracker() {
     const total = filtered.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
     // Derive available years
-    const availableYears = [...new Set(data.map(item => {
-        try { return new Date(item.date).getFullYear() } catch { return new Date().getFullYear() }
-    }))].sort().filter(y => !isNaN(y) && y > 1900 && y < 2100);
+    const currentYear = new Date().getFullYear();
+    const uniqueYears = new Set(data.map(item => {
+        try { return new Date(item.date).getFullYear() } catch { return currentYear }
+    }));
+    uniqueYears.add(currentYear);
+    uniqueYears.add(year); // Ensure selected year is always an option
 
-    if (availableYears.length === 0) availableYears.push(new Date().getFullYear());
+    const availableYears = [...uniqueYears].sort().filter(y => !isNaN(y) && y > 1900 && y < 2100);
 
     return (
         <div className="container fade-in">
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <button onClick={() => navigate('/dashboard')} style={{ width: 'auto', padding: '8px', marginRight: '10px' }}>←</button>
-                    <h2>My EMIs</h2>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div
+                        onClick={() => navigate('/dashboard')}
+                        style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '16px',
+                            background: 'rgba(255,255,255,0.05)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                    >
+                        <span style={{ fontSize: '20px' }}>←</span>
+                    </div>
+                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>My EMIs</h1>
                 </div>
-                {/* Clear button removed or needs detailed implementation to delete from Firestore */}
             </div>
 
-            <div className="glass-card">
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                    <select value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ flex: 1, marginBottom: 0 }}>
-                        {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+            <div className="glass-card" style={{ marginBottom: '32px', padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Analysis period</p>
+                    <select value={year} onChange={e => setYear(parseInt(e.target.value))} style={{ width: 'auto', padding: '6px 16px', fontSize: '14px', background: 'rgba(255,255,255,0.1)', border: 'none', marginBottom: 0, height: '36px' }}>
+                        {availableYears.map(y => <option key={y} value={y} style={{ background: '#222' }}>{y}</option>)}
                     </select>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                     {months.map((m, idx) => (
                         <div
                             key={m}
                             onClick={() => setMonth(idx)}
                             style={{
-                                padding: '8px 4px',
+                                padding: '12px 0',
                                 textAlign: 'center',
-                                borderRadius: '8px',
-                                fontSize: '12px',
+                                borderRadius: '14px',
+                                fontSize: '13px',
+                                fontWeight: month === idx ? '700' : '500',
                                 cursor: 'pointer',
-                                background: month === idx ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
-                                border: month === idx ? '1px solid white' : '1px solid transparent'
+                                background: month === idx ? '#fff' : 'rgba(255,255,255,0.05)',
+                                color: month === idx ? '#000' : 'rgba(255,255,255,0.6)',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                border: month === idx ? '1px solid #fff' : '1px solid transparent',
+                                transform: month === idx ? 'scale(1.05)' : 'scale(1)'
                             }}
                         >
                             {m}
@@ -95,10 +116,15 @@ export default function EMITracker() {
                 </div>
             </div>
 
-            <div className="glass-card" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)', borderLeft: '4px solid #4ade80' }}>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Total Obligations for {months[month]} {year}</p>
-                <h1 style={{ fontSize: '32px', marginTop: '4px' }}>
-                    {total.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}
+            <div className="glass-card" style={{
+                marginBottom: '32px',
+                background: 'linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(255,255,255,0.02) 100%)',
+                borderLeft: '8px solid #4ade80',
+                padding: '28px'
+            }}>
+                <p style={{ fontSize: '12px', color: 'rgba(74, 222, 128, 0.8)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>Total Obligations ({months[month]} {year})</p>
+                <h1 style={{ fontSize: 'clamp(26px, 8vw, 32px)', margin: 0, fontWeight: '800', letterSpacing: '-0.02em' }}>
+                    {total.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                 </h1>
             </div>
 
@@ -108,7 +134,19 @@ export default function EMITracker() {
                         <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No EMIs found for this period.</p>
                     ) : (
                         filtered.map((item, index) => (
-                            <div key={index} className="glass-card" style={{ padding: '16px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div
+                                key={index}
+                                className="glass-card"
+                                onClick={() => navigate(`/schedule/${encodeURIComponent(item.bank)}`)}
+                                style={{
+                                    padding: '16px',
+                                    marginBottom: '10px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    cursor: 'pointer'
+                                }}
+                            >
                                 <div>
                                     <h4 style={{ marginBottom: '4px' }}>{item.bank}</h4>
                                     <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -116,7 +154,7 @@ export default function EMITracker() {
                                     </p>
                                 </div>
                                 <div style={{ fontWeight: 600, fontSize: '18px' }}>
-                                    {item.amount.toLocaleString('en-US', { style: 'currency', currency: 'INR' })}
+                                    {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                 </div>
                             </div>
                         ))

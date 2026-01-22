@@ -2,6 +2,7 @@
   "name": "sc-emi-tracker",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://arunpk811.github.io/emi-tracker",
   "type": "module",
   "scripts": {
     "dev": "vite",

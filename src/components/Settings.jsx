@@ -57,6 +57,54 @@ export default function Settings() {
                 ))}
 
                 <button onClick={handleSave} className="btn-primary">Save & Reload</button>
+
+                <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+
+                <h3 style={{ color: '#ef4444' }}>Danger Zone</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                    This will delete ALL your uploaded EMIs and Investments. This action cannot be undone.
+                </p>
+                <button
+                    onClick={async () => {
+                        if (confirm("Are you SURE you want to delete ALL your data? This cannot be undone.")) {
+                            try {
+                                const { collection, query, where, getDocs, writeBatch, deleteDoc } = await import('firebase/firestore');
+                                const { db, auth } = await import('../firebase');
+
+                                if (!auth.currentUser) return;
+
+                                const batch = writeBatch(db);
+                                // Delete EMIs
+                                const q1 = query(collection(db, 'emis'), where("uid", "==", auth.currentUser.uid));
+                                const snap1 = await getDocs(q1);
+                                snap1.forEach(doc => batch.delete(doc.ref));
+
+                                // Delete Investments
+                                const q2 = query(collection(db, 'investments'), where("uid", "==", auth.currentUser.uid));
+                                const snap2 = await getDocs(q2);
+                                snap2.forEach(doc => batch.delete(doc.ref));
+
+                                await batch.commit();
+                                alert("All data deleted.");
+                                window.location.href = '/';
+                            } catch (e) {
+                                console.error(e);
+                                alert("Error deleting data. You might have too many records. Deleting what I can...");
+                            }
+                        }
+                    }}
+                    style={{
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.5)',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        width: '100%',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Reset & Delete All Data
+                </button>
             </div>
         </div>
     );

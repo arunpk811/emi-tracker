@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import UploadEMI from './components/UploadEMI';
 import EMITracker from './components/EMITracker';
+import LoanSchedule from './components/LoanSchedule';
+import Investments from './components/Investments';
+import ScheduledPayments from './components/ScheduledPayments';
+import Income from './components/Income';
 import Settings from './components/Settings';
 import { isConfigured, auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -46,10 +50,42 @@ function App() {
           }
         />
         <Route
+          path="/schedule/:bankName"
+          element={
+            <ProtectedRoute>
+              <LoanSchedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/upload"
           element={
             <ProtectedRoute>
               <UploadEMI />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/investments"
+          element={
+            <ProtectedRoute>
+              <Investments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/income"
+          element={
+            <ProtectedRoute>
+              <Income />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-schedule"
+          element={
+            <ProtectedRoute>
+              <ScheduledPayments />
             </ProtectedRoute>
           }
         />
