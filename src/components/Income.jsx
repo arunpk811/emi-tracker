@@ -23,16 +23,20 @@ export default function Income() {
     const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
-        if (!auth.currentUser) return;
+        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+            if (!currentUser) return;
 
-        const q = query(collection(db, 'income'), where("uid", "==", auth.currentUser.uid));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setIncomes(fetched);
-            setLoading(false);
+            const q = query(collection(db, 'income'), where("uid", "==", currentUser.uid));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setIncomes(fetched);
+                setLoading(false);
+            });
+
+            return () => unsubscribe();
         });
 
-        return () => unsubscribe();
+        return () => unsubscribeAuth();
     }, []);
 
     const handleAddIncome = async (e) => {

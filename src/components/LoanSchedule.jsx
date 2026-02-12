@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, writeBatch, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 export default function LoanSchedule() {
     const navigate = useNavigate();
     const { bankName } = useParams(); // Get bank name from URL
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const togglePaidStatus = async (id, currentStatus) => {
+        try {
+            const docRef = doc(db, 'emis', id);
+            await updateDoc(docRef, {
+                status: currentStatus === 'paid' ? 'unpaid' : 'paid'
+            });
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
+    };
 
     const handleDeleteLoan = async () => {
         if (!window.confirm(`Are you sure you want to delete all records for ${decodeURIComponent(bankName)}? This cannot be undone.`)) {
@@ -154,24 +165,24 @@ export default function LoanSchedule() {
                     <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '12px', fontWeight: '700' }}>
                             <span style={{ color: '#4ade80' }}>Paid: {
-                                data.filter(i => new Date(i.date) <= new Date())
+                                data.filter(i => i.status === 'paid' || (i.status === undefined && new Date(i.date) <= new Date()))
                                     .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0)
                                     .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
                             }</span>
                             <span style={{ color: 'rgba(255,255,255,0.5)' }}>
-                                {Math.round((data.filter(i => new Date(i.date) <= new Date()).length / data.length) * 100)}% Complete
+                                {Math.round((data.filter(i => i.status === 'paid' || (i.status === undefined && new Date(i.date) <= new Date())).length / data.length) * 100)}% Complete
                             </span>
                         </div>
                         <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.08)', borderRadius: '10px', overflow: 'hidden' }}>
                             <div style={{
-                                width: `${Math.min(100, (data.filter(i => new Date(i.date) <= new Date()).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0) / data.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 1)) * 100)}%`,
+                                width: `${Math.min(100, (data.filter(i => i.status === 'paid' || (i.status === undefined && new Date(i.date) <= new Date())).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0) / data.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 1)) * 100)}%`,
                                 height: '100%',
                                 background: 'linear-gradient(90deg, #4ade80, #22c55e)',
                                 transition: 'width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                             }} />
                         </div>
                         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', marginTop: '8px', textAlign: 'right', textTransform: 'uppercase' }}>
-                            RECOVERY RATE: {((data.filter(i => new Date(i.date) <= new Date()).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0) / data.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 1)) * 100).toFixed(1)}%
+                            RECOVERY RATE: {((data.filter(i => i.status === 'paid' || (i.status === undefined && new Date(i.date) <= new Date())).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0) / data.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 1)) * 100).toFixed(1)}%
                         </p>
                     </div>
                 )}
@@ -181,21 +192,43 @@ export default function LoanSchedule() {
                     data.length === 0 ? (
                         <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No records found.</p>
                     ) : (
-                        data.map((item) => (
-                            <div key={item.id} className="glass-card" style={{ padding: '16px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <p style={{ fontSize: '14px', fontWeight: '500' }}>
-                                        {new Date(item.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                                    </p>
-                                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                                        {new Date(item.date) > new Date() ? 'UPCOMING' : 'PAID'}
-                                    </p>
+                        data.map((item) => {
+                            const isPaid = item.status === 'paid' || (item.status === undefined && new Date(item.date) <= new Date());
+                            return (
+                                <div key={item.id} className="glass-card" style={{ padding: '16px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: isPaid ? 0.7 : 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div
+                                            onClick={() => togglePaidStatus(item.id, item.status)}
+                                            style={{
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '50%',
+                                                border: isPaid ? 'none' : '2px solid rgba(255,255,255,0.2)',
+                                                background: isPaid ? '#4ade80' : 'transparent',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            {isPaid && <span style={{ color: '#000', fontSize: '14px', fontWeight: '900' }}>✓</span>}
+                                        </div>
+                                        <div>
+                                            <p style={{ fontSize: '14px', fontWeight: '500', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>
+                                                {new Date(item.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                            </p>
+                                            <p style={{ fontSize: '10px', color: isPaid ? '#4ade80' : 'var(--text-muted)', marginTop: '4px', fontWeight: '700' }}>
+                                                {isPaid ? 'PAID' : (new Date(item.date) > new Date() ? 'UPCOMING' : 'DUE')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div style={{ fontWeight: 600, fontSize: '16px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>
+                                        {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                    </div>
                                 </div>
-                                <div style={{ fontWeight: 600, fontSize: '16px' }}>
-                                    {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
             </div>
         </div>

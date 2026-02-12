@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, updateDoc, doc } from 'firebase/firestore';
 
 export default function EMITracker() {
     const navigate = useNavigate();
@@ -10,25 +10,40 @@ export default function EMITracker() {
     const [month, setMonth] = useState(new Date().getMonth()); // 0-11
     const [loading, setLoading] = useState(true);
 
+    const togglePaidStatus = async (id, currentStatus) => {
+        try {
+            const docRef = doc(db, 'emis', id);
+            await updateDoc(docRef, {
+                status: currentStatus === 'paid' ? 'unpaid' : 'paid'
+            });
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
+    };
+
     useEffect(() => {
-        if (!auth.currentUser) return;
+        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+            if (!currentUser) return;
 
-        // Real-time Listener
-        const q = query(
-            collection(db, 'emis'),
-            where("uid", "==", auth.currentUser.uid)
-        );
+            // Real-time Listener
+            const q = query(
+                collection(db, 'emis'),
+                where("uid", "==", currentUser.uid)
+            );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setData(fetched);
-            setLoading(false);
-        }, (error) => {
-            console.error("Firestore Error:", error);
-            setLoading(false);
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setData(fetched);
+                setLoading(false);
+            }, (error) => {
+                console.error("Firestore Error:", error);
+                setLoading(false);
+            });
+
+            return () => unsubscribe();
         });
 
-        return () => unsubscribe();
+        return () => unsubscribeAuth();
     }, []);
 
     const months = [
@@ -48,6 +63,8 @@ export default function EMITracker() {
 
     const filtered = getFilteredData();
     const total = filtered.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+    const paid = filtered.filter(i => i.status === 'paid' || (i.status === undefined && new Date(i.date) <= new Date()))
+        .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
     // Derive available years
     const currentYear = new Date().getFullYear();
@@ -122,10 +139,20 @@ export default function EMITracker() {
                 borderLeft: '8px solid #4ade80',
                 padding: '28px'
             }}>
-                <p style={{ fontSize: '12px', color: 'rgba(74, 222, 128, 0.8)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>Total Obligations ({months[month]} {year})</p>
-                <h1 style={{ fontSize: 'clamp(26px, 8vw, 32px)', margin: 0, fontWeight: '800', letterSpacing: '-0.02em' }}>
-                    {total.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                </h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <p style={{ fontSize: '11px', color: 'rgba(74, 222, 128, 0.8)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>Total Obligations ({months[month]} {year})</p>
+                        <h1 style={{ fontSize: '32px', margin: 0, fontWeight: '800', letterSpacing: '-0.02em' }}>
+                            {total.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                        </h1>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: '700', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>Paid</p>
+                        <h1 style={{ fontSize: '24px', margin: 0, fontWeight: '800', color: '#4ade80' }}>
+                            {paid.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                        </h1>
+                    </div>
+                </div>
             </div>
 
             <div style={{ marginTop: '20px' }}>
@@ -133,31 +160,57 @@ export default function EMITracker() {
                     filtered.length === 0 ? (
                         <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No EMIs found for this period.</p>
                     ) : (
-                        filtered.map((item, index) => (
-                            <div
-                                key={index}
-                                className="glass-card"
-                                onClick={() => navigate(`/schedule/${encodeURIComponent(item.bank)}`)}
-                                style={{
-                                    padding: '16px',
-                                    marginBottom: '10px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <div>
-                                    <h4 style={{ marginBottom: '4px' }}>{item.bank}</h4>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                        {new Date(item.date).toLocaleDateString()}
-                                    </p>
+                        filtered.map((item, index) => {
+                            const isPaid = item.status === 'paid' || (item.status === undefined && new Date(item.date) <= new Date());
+                            return (
+                                <div
+                                    key={item.id || index}
+                                    className="glass-card"
+                                    onClick={() => navigate(`/schedule/${encodeURIComponent(item.bank)}`)}
+                                    style={{
+                                        padding: '16px',
+                                        marginBottom: '10px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        opacity: isPaid ? 0.7 : 1
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                togglePaidStatus(item.id, item.status);
+                                            }}
+                                            style={{
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '50%',
+                                                border: isPaid ? 'none' : '2px solid rgba(255,255,255,0.2)',
+                                                background: isPaid ? '#4ade80' : 'transparent',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            {isPaid && <span style={{ color: '#000', fontSize: '14px', fontWeight: '900' }}>✓</span>}
+                                        </div>
+                                        <div>
+                                            <h4 style={{ marginBottom: '4px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>{item.bank}</h4>
+                                            <p style={{ fontSize: '12px', color: isPaid ? '#4ade80' : 'var(--text-muted)', fontWeight: isPaid ? '700' : '400' }}>
+                                                {isPaid ? 'PAID' : new Date(item.date).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div style={{ fontWeight: 600, fontSize: '18px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>
+                                        {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                    </div>
                                 </div>
-                                <div style={{ fontWeight: 600, fontSize: '18px' }}>
-                                    {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
             </div>
         </div>

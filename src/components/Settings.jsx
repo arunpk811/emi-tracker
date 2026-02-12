@@ -58,6 +58,19 @@ export default function Settings() {
 
                 <button onClick={handleSave} className="btn-primary">Save & Reload</button>
 
+                <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '20px' }}>
+                    <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Current Session Info</h3>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '5px' }}>Logged in as:</p>
+                    <p style={{ fontSize: '14px', fontWeight: '700', wordBreak: 'break-all' }}>{auth?.currentUser?.email || 'Not logged in'}</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '10px', marginBottom: '5px' }}>User ID (UID):</p>
+                    <code style={{ fontSize: '11px', background: '#000', padding: '4px 8px', borderRadius: '4px', display: 'block', wordBreak: 'break-all' }}>
+                        {auth?.currentUser?.uid || 'N/A'}
+                    </code>
+                    <p style={{ fontSize: '10px', color: '#4ade80', marginTop: '10px' }}>
+                        💡 If your data is missing, it's likely linked to your OLD UID.
+                    </p>
+                </div>
+
                 <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
 
                 <h3 style={{ color: '#ef4444' }}>Danger Zone</h3>

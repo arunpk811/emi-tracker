@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 // Helper to get config from Settings
 const getConfig = () => {
@@ -8,7 +8,7 @@ const getConfig = () => {
     return stored ? JSON.parse(stored) : null;
 };
 
-let app, db, auth;
+let app, db, auth, googleProvider;
 
 const config = getConfig();
 
@@ -17,10 +17,11 @@ if (config) {
         app = initializeApp(config);
         db = getFirestore(app);
         auth = getAuth(app);
+        googleProvider = new GoogleAuthProvider();
     } catch (error) {
         console.error("Firebase Initialization Error:", error);
     }
 }
 
-export { db, auth };
+export { db, auth, googleProvider };
 export const isConfigured = () => !!app;

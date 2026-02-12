@@ -1,142 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-  --primary: #6366f1;
-  --secondary: #a855f7;
-  --bg-gradient: radial-gradient(circle at top left, #2c3e50, #000000);
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --text-color: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.6);
-  --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  --accent-green: #4ade80;
-  --accent-red: #ef4444;
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --surface: #242424;
+  --surface-hover: #2a2a2a;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --border: #3f3f46;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
 }
 
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--bg-gradient);
-  background-attachment: fixed;
-  min-height: 100vh;
-  color: var(--text-color);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
 #root {
-  width: 100%;
-  max-width: 480px;
-  min-height: 100vh;
+  max-width: 100%;
   margin: 0 auto;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  box-shadow: var(--card-shadow);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 100vh;
+  background: var(--bg-secondary);
 }
 
-/* Glassmorphism Utilities */
-.glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 15px 35px 0 rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 24px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
 }
 
-.glass-card:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Responsive Utilities */
 .container {
+  padding: 16px;
+  max-width: 100%;
+}
+
+.glass-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
   padding: 20px;
-  width: 100%;
-  flex: 1;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
 }
 
-h1 {
-  font-size: clamp(20px, 7vw, 28px);
-  letter-spacing: -0.04em;
-  margin-bottom: 0.2em;
-}
-
-h2 {
-  font-size: clamp(16px, 5vw, 20px);
-  margin-bottom: 0.5em;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  border-radius: 18px;
-  padding: 16px 24px;
-  font-weight: 600;
-  font-size: 15px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-button:active {
+.glass-card:active {
   transform: scale(0.98);
 }
 
+button {
+  font-family: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 48px;
+  /* Better touch target */
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
 .btn-primary {
-  background: white;
-  color: var(--primary);
+  background: var(--primary);
+  color: white;
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 input,
 select {
   width: 100%;
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: white;
-  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
   font-size: 16px;
-  outline: none;
-  transition: all 0.3s ease;
+  /* Prevents zoom on iOS */
+  font-family: inherit;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+  touch-action: manipulation;
+  min-height: 48px;
+  /* Better touch target */
 }
 
 input:focus,
 select:focus {
-  background: rgba(255, 255, 255, 0.07);
+  outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-tertiary);
 }
 
-/* Animation */
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
 .fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
@@ -151,35 +168,106 @@ input::placeholder {
   }
 }
 
-/* Nav */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  width: 100%;
-  /* Relative to #root if we force position relative on root? No fixed is relative to viewport */
-  max-width: 480px;
-  margin: 0 auto;
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
-.nav-item {
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: none;
-  font-size: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* Utility Classes */
+.text-success {
+  color: var(--success);
 }
 
-.nav-item.active {
-  color: white;
-  font-weight: 600;
+.text-danger {
+  color: var(--danger);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+.bg-success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.bg-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.bg-primary {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .glass-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+}
+
+/* Prevent text selection on interactive elements */
+button,
+.glass-card {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
 }
