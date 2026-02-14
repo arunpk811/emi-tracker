@@ -13,22 +13,25 @@ export default function Dashboard() {
     const [allEmis, setAllEmis] = useState([]);
     const [allIncomes, setAllIncomes] = useState([]);
     const [allBorrowers, setAllBorrowers] = useState([]);
+    const [allInvestments, setAllInvestments] = useState([]);
     const [summary, setSummary] = useState({
         total: 0,
         paid: 0,
         percentage: 0,
         monthlyIncome: 0,
         monthlyExpenses: 0,
-        totalInvested: 0
+        totalInvested: 0,
+        expectedMaturity: 0
     });
 
     useEffect(() => {
-        let unsubEmis, unsubIncomes, unsubBorrowers;
+        let unsubEmis, unsubIncomes, unsubBorrowers, unsubInvestments;
 
         const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
             if (unsubEmis) unsubEmis();
             if (unsubIncomes) unsubIncomes();
             if (unsubBorrowers) unsubBorrowers();
+            if (unsubInvestments) unsubInvestments();
 
             if (!currentUser) return;
 
@@ -49,6 +52,12 @@ export default function Dashboard() {
                 (snapshot) => setAllBorrowers(snapshot.docs.map(doc => doc.data())),
                 (err) => console.error("Borrower Listener Error:", err)
             );
+
+            unsubInvestments = onSnapshot(
+                query(collection(db, 'investments'), where("uid", "==", currentUser.uid)),
+                (snapshot) => setAllInvestments(snapshot.docs.map(doc => doc.data())),
+                (err) => console.error("Investments Listener Error:", err)
+            );
         });
 
         return () => {
@@ -56,6 +65,7 @@ export default function Dashboard() {
             if (unsubEmis) unsubEmis();
             if (unsubIncomes) unsubIncomes();
             if (unsubBorrowers) unsubBorrowers();
+            if (unsubInvestments) unsubInvestments();
         };
     }, []);
 
@@ -110,9 +120,10 @@ export default function Dashboard() {
             percentage: finalTotal > 0 ? (paid / finalTotal) * 100 : 0,
             monthlyIncome,
             monthlyExpenses,
-            totalInvested: allEmis.filter(d => (d.category || 'debt') === 'investment').reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0)
+            totalInvested: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.principal) || 0), 0),
+            expectedMaturity: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.maturityAmount) || 0), 0)
         });
-    }, [allEmis, allIncomes, selectedMonth, selectedYear]);
+    }, [allEmis, allIncomes, allInvestments, selectedMonth, selectedYear]);
 
     const remaining = summary.monthlyIncome - summary.monthlyExpenses;
 
@@ -225,7 +236,7 @@ export default function Dashboard() {
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Expected Yield</div>
                             <div style={{ fontSize: '22px', fontWeight: '700' }}>
-                                ₹{allEmis.filter(d => (d.category || 'debt') === 'investment').length} Plans
+                                ₹{(summary.expectedMaturity || 0).toLocaleString('en-IN')}
                             </div>
                         </div>
                     </div>

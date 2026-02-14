@@ -7,7 +7,7 @@ import BottomNav from './BottomNav';
 export default function Investments() {
     const navigate = useNavigate();
     const [investments, setInvestments] = useState([]);
-    const [form, setForm] = useState({ name: '', principal: '', roi: '', tenure: '' });
+    const [form, setForm] = useState({ name: '', principal: '', roi: '', tenure: '', type: 'one-time' });
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
 
@@ -25,15 +25,27 @@ export default function Investments() {
         if (!form.name || !form.principal || !form.roi || !form.tenure) return;
 
         const principal = parseFloat(form.principal);
-        const rate = parseFloat(form.roi) / 100;
-        const time = parseFloat(form.tenure); // in years
-        const amount = principal * Math.pow((1 + rate), time);
+        const annualRoi = parseFloat(form.roi);
+        const years = parseFloat(form.tenure);
+
+        let amount = 0;
+        if (form.type === 'recurring') {
+            // SIP Formula: P * [((1 + i)^n - 1) / i] * (1 + i)
+            const i = (annualRoi / 100) / 12;
+            const n = years * 12;
+            amount = principal * ((Math.pow(1 + i, n) - 1) / i) * (1 + i);
+        } else {
+            // Lump sum: P * (1 + r)^t
+            const r = annualRoi / 100;
+            amount = principal * Math.pow(1 + r, years);
+        }
 
         const data = {
             name: form.name,
             principal,
-            roi: parseFloat(form.roi),
-            tenure: time,
+            roi: annualRoi,
+            tenure: years,
+            type: form.type,
             maturityAmount: amount,
             updatedAt: new Date().toISOString()
         };
@@ -62,7 +74,8 @@ export default function Investments() {
             name: inv.name,
             principal: inv.principal,
             roi: inv.roi,
-            tenure: inv.tenure
+            tenure: inv.tenure,
+            type: inv.type || 'one-time'
         });
         setEditingId(inv.id);
         setShowForm(true);
@@ -107,6 +120,32 @@ export default function Investments() {
                 <div className="glass-card" style={{ marginBottom: '32px', padding: '28px', border: editingId ? '2px solid #6366f1' : '1px solid rgba(99, 102, 241, 0.2)' }}>
                     <h3 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: '700' }}>{editingId ? 'Edit Plan' : 'Add New Plan'}</h3>
                     <form onSubmit={handleSave}>
+                        <div style={{ marginBottom: '24px', display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, type: 'one-time' })}
+                                style={{
+                                    flex: 1, padding: '10px', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: '700',
+                                    background: form.type === 'one-time' ? '#fff' : 'transparent',
+                                    color: form.type === 'one-time' ? '#000' : 'rgba(255,255,255,0.5)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                ONE-TIME
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, type: 'recurring' })}
+                                style={{
+                                    flex: 1, padding: '10px', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: '700',
+                                    background: form.type === 'recurring' ? '#fff' : 'transparent',
+                                    color: form.type === 'recurring' ? '#000' : 'rgba(255,255,255,0.5)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                MONTHLY (SIP)
+                            </button>
+                        </div>
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Asset Name</label>
                             <input
@@ -116,7 +155,9 @@ export default function Investments() {
                             />
                         </div>
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Principal Amount (₹)</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>
+                                {form.type === 'recurring' ? 'Monthly Deposit (₹)' : 'Principal Amount (₹)'}
+                            </label>
                             <input
                                 type="number" placeholder="0.00"
                                 value={form.principal} onChange={e => setForm({ ...form, principal: e.target.value })}
@@ -143,7 +184,7 @@ export default function Investments() {
                         </div>
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <button type="submit" className="btn-primary" style={{ flex: 1, background: '#6366f1', color: '#fff' }}>{editingId ? 'Update' : 'Save'} Investment</button>
-                            <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => { setShowForm(false); setEditingId(null); setForm({ name: '', principal: '', roi: '', tenure: '' }); }}>Cancel</button>
+                            <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => { setShowForm(false); setEditingId(null); setForm({ name: '', principal: '', roi: '', tenure: '', type: 'one-time' }); }}>Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -174,7 +215,9 @@ export default function Investments() {
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                 <div>
-                                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '6px' }}>Invested</p>
+                                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '6px' }}>
+                                        {inv.type === 'recurring' ? 'Monthly' : 'Once'}
+                                    </p>
                                     <p style={{ fontSize: '16px', fontWeight: '600' }}>{inv.principal.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
