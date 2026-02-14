@@ -108,7 +108,8 @@ export default function Dashboard() {
             paid,
             percentage: finalTotal > 0 ? (paid / finalTotal) * 100 : 0,
             monthlyIncome,
-            monthlyExpenses
+            monthlyExpenses,
+            totalInvested: allEmis.filter(d => (d.category || 'debt') === 'investment').reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0)
         });
     }, [allEmis, allIncomes, selectedMonth, selectedYear]);
 
@@ -151,21 +152,25 @@ export default function Dashboard() {
                     </select>
                 </div>
 
-                {/* Balance Card */}
-                <div className="glass-card" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #1e40af 100%)', border: 'none', marginBottom: '16px' }}>
-                    <div className="label" style={{ color: 'rgba(255,255,255,0.8)' }}>Available Balance</div>
+                {/* 1. Budget Forecast Card */}
+                <div
+                    className="glass-card"
+                    onClick={() => navigate('/tracker')}
+                    style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #1e40af 100%)', border: 'none', marginBottom: '16px', cursor: 'pointer' }}
+                >
+                    <div className="label" style={{ color: 'rgba(255,255,255,0.8)' }}>Budget Forecast</div>
                     <div className="stat-value" style={{ color: 'white', marginTop: '4px', marginBottom: '20px', fontSize: '36px' }}>
                         ₹{remaining.toLocaleString('en-IN')}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                         <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Income</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Income</div>
                             <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
                                 ₹{summary.monthlyIncome.toLocaleString('en-IN')}
                             </div>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Expenses</div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Expenses</div>
                             <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
                                 ₹{summary.monthlyExpenses.toLocaleString('en-IN')}
                             </div>
@@ -173,14 +178,14 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Debt Progress */}
+                {/* 2. Loan Progress */}
                 <div
                     className="glass-card"
                     onClick={() => navigate('/tracker')}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: 'pointer', marginBottom: '16px' }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <div className="label" style={{ marginBottom: 0 }}>Debt Progress</div>
+                        <div className="label" style={{ marginBottom: 0 }}>Loan Progress</div>
                         <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--primary)' }}>
                             {Math.round(summary.percentage)}%
                         </div>
@@ -194,38 +199,66 @@ export default function Dashboard() {
                         }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                        <span>₹{summary.paid.toLocaleString('en-IN')} paid</span>
-                        <span>₹{summary.total.toLocaleString('en-IN')} total</span>
+                        <span>₹{summary.paid.toLocaleString('en-IN')} cleared</span>
+                        <span>₹{summary.total.toLocaleString('en-IN')} outstanding</span>
                     </div>
                 </div>
 
-                {/* Lending Overview */}
-                {allBorrowers.length > 0 && (
-                    <div className="glass-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <div className="label" style={{ marginBottom: 0 }}>Lending</div>
-                            <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 12px', borderRadius: '20px' }}>
-                                {allBorrowers.filter(b => b.status === 'active').length} Active
+                {/* 3. Investments Tracker */}
+                <div
+                    className="glass-card"
+                    onClick={() => navigate('/investments')}
+                    style={{ cursor: 'pointer', marginBottom: '16px', borderLeft: '8px solid var(--success)' }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <div className="label" style={{ marginBottom: 0 }}>Investments Tracker</div>
+                        <div style={{ fontSize: '24px' }}>🌱</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total Invested</div>
+                            <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--success)' }}>
+                                ₹{summary.totalInvested.toLocaleString('en-IN')}
                             </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                            <div>
-                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total Lent</div>
-                                <div style={{ fontSize: '22px', fontWeight: '700' }}>
-                                    ₹{allBorrowers.reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0).toLocaleString('en-IN')}
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Outstanding</div>
-                                <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--danger)' }}>
-                                    ₹{(allBorrowers.reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) -
-                                        allBorrowers.reduce((acc, b) => acc + (b.settlements?.reduce((s, set) => s + (parseFloat(set.amount) || 0), 0) || 0), 0)
-                                    ).toLocaleString('en-IN')}
-                                </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Expected Yield</div>
+                            <div style={{ fontSize: '22px', fontWeight: '700' }}>
+                                ₹{allEmis.filter(d => (d.category || 'debt') === 'investment').length} Plans
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+
+                {/* 4. Lending Overview */}
+                <div
+                    className="glass-card"
+                    onClick={() => navigate('/borrowers')}
+                    style={{ cursor: 'pointer', marginBottom: '16px' }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <div className="label" style={{ marginBottom: 0 }}>Lending Overall</div>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '4px 12px', borderRadius: '20px' }}>
+                            {allBorrowers.filter(b => b.status === 'active').length} Active Borrowers
+                        </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Principal Lent</div>
+                            <div style={{ fontSize: '22px', fontWeight: '700' }}>
+                                ₹{allBorrowers.reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0).toLocaleString('en-IN')}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Outstanding</div>
+                            <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--danger)' }}>
+                                ₹{(allBorrowers.reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) -
+                                    allBorrowers.reduce((acc, b) => acc + (b.settlements?.reduce((s, set) => s + (parseFloat(set.amount) || 0), 0) || 0), 0)
+                                ).toLocaleString('en-IN')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
 
