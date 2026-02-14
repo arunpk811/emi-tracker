@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, isConfigured, googleProvider } from '../firebase';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -15,22 +13,6 @@ export default function Login() {
             navigate('/settings');
         }
     }, [navigate]);
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        if (!auth) return;
-        setLoading(true);
-        setError('');
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            navigate('/dashboard');
-        } catch (err) {
-            console.error(err);
-            setError('Invalid email or password.');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleGoogleLogin = async () => {
         if (!auth || !googleProvider) return;
@@ -83,7 +65,7 @@ export default function Login() {
                         </button>
                     </div>
                 ) : (
-                    <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
+                    <div>
                         {error && (
                             <div style={{
                                 background: 'rgba(239, 68, 68, 0.1)',
@@ -98,48 +80,10 @@ export default function Login() {
                             </div>
                         )}
 
-                        <div style={{ marginBottom: '16px' }}>
-                            <label className="label">Email</label>
-                            <input
-                                type="email"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div style={{ marginBottom: '24px' }}>
-                            <label className="label">Password</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="btn-primary"
-                            disabled={loading}
-                            style={{ width: '100%', marginBottom: '12px' }}
-                        >
-                            {loading ? 'Signing in...' : 'Sign In'}
-                        </button>
-
-                        <div style={{ position: 'relative', textAlign: 'center', margin: '24px 0' }}>
-                            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'var(--border)' }} />
-                            <span style={{ position: 'relative', background: 'var(--surface)', padding: '0 12px', fontSize: '13px', color: 'var(--text-tertiary)' }}>
-                                OR
-                            </span>
-                        </div>
-
                         <button
                             type="button"
                             onClick={handleGoogleLogin}
-                            className="btn-secondary"
+                            className="btn-primary"
                             disabled={loading}
                             style={{ width: '100%' }}
                         >
@@ -149,9 +93,9 @@ export default function Login() {
                                 <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
                                 <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335" />
                             </svg>
-                            Continue with Google
+                            {loading ? 'Signing in...' : 'Continue with Google'}
                         </button>
-                    </form>
+                    </div>
                 )}
 
                 <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
