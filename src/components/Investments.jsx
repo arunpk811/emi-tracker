@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import BottomNav from './BottomNav';
 
 export default function Investments() {
@@ -9,6 +9,7 @@ export default function Investments() {
     const [investments, setInvestments] = useState([]);
     const [form, setForm] = useState({ name: '', principal: '', roi: '', tenure: '' });
     const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -19,30 +20,62 @@ export default function Investments() {
         return () => unsubscribe();
     }, []);
 
-    const handleAdd = async (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
         if (!form.name || !form.principal || !form.roi || !form.tenure) return;
 
         const principal = parseFloat(form.principal);
         const rate = parseFloat(form.roi) / 100;
         const time = parseFloat(form.tenure); // in years
-
-        // Simple Interest Formula for MVP (A = P(1 + rt)) or Compound?
-        // Let's assume Compound Interest Annually: A = P(1 + r/n)^(nt) where n=1
         const amount = principal * Math.pow((1 + rate), time);
 
-        await addDoc(collection(db, 'investments'), {
-            uid: auth.currentUser.uid,
+        const data = {
             name: form.name,
             principal,
             roi: parseFloat(form.roi),
             tenure: time,
             maturityAmount: amount,
-            createdAt: new Date().toISOString()
-        });
+            updatedAt: new Date().toISOString()
+        };
 
-        setForm({ name: '', principal: '', roi: '', tenure: '' });
-        setShowForm(false);
+        try {
+            if (editingId) {
+                await updateDoc(doc(db, 'investments', editingId), data);
+                setEditingId(null);
+            } else {
+                await addDoc(collection(db, 'investments'), {
+                    ...data,
+                    uid: auth.currentUser.uid,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            setForm({ name: '', principal: '', roi: '', tenure: '' });
+            setShowForm(false);
+        } catch (error) {
+            console.error("Error saving investment:", error);
+            alert("Failed to save investment.");
+        }
+    };
+
+    const handleEdit = (inv) => {
+        setForm({
+            name: inv.name,
+            principal: inv.principal,
+            roi: inv.roi,
+            tenure: inv.tenure
+        });
+        setEditingId(inv.id);
+        setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Delete this investment?")) return;
+        try {
+            await deleteDoc(doc(db, 'investments', id));
+        } catch (error) {
+            console.error("Error deleting:", error);
+        }
     };
 
     return (
@@ -71,9 +104,9 @@ export default function Investments() {
             </div>
 
             {showForm && (
-                <div className="glass-card" style={{ marginBottom: '32px', padding: '28px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                    <h3 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: '700' }}>Add New Plan</h3>
-                    <form onSubmit={handleAdd}>
+                <div className="glass-card" style={{ marginBottom: '32px', padding: '28px', border: editingId ? '2px solid #6366f1' : '1px solid rgba(99, 102, 241, 0.2)' }}>
+                    <h3 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: '700' }}>{editingId ? 'Edit Plan' : 'Add New Plan'}</h3>
+                    <form onSubmit={handleSave}>
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Asset Name</label>
                             <input
@@ -108,7 +141,10 @@ export default function Investments() {
                                 />
                             </div>
                         </div>
-                        <button type="submit" className="btn-primary" style={{ background: '#6366f1', color: '#fff' }}>Save Investment</button>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button type="submit" className="btn-primary" style={{ flex: 1, background: '#6366f1', color: '#fff' }}>{editingId ? 'Update' : 'Save'} Investment</button>
+                            <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => { setShowForm(false); setEditingId(null); setForm({ name: '', principal: '', roi: '', tenure: '' }); }}>Cancel</button>
+                        </div>
                     </form>
                 </div>
             )}
@@ -128,7 +164,7 @@ export default function Investments() {
                                     {inv.roi}% RoI
                                 </span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
                                 <div>
                                     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '6px' }}>Invested</p>
                                     <p style={{ fontSize: '16px', fontWeight: '600' }}>{inv.principal.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}</p>
@@ -138,6 +174,11 @@ export default function Investments() {
                                     <p style={{ fontSize: '22px', fontWeight: '800', color: '#fff', letterSpacing: '-0.01em' }}>
                                         {Math.round(inv.maturityAmount).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                     </p>
+                                </div>
+
+                                <div style={{ position: 'absolute', top: '-60px', right: 0, display: 'flex', gap: '8px', opacity: 0.3 }}>
+                                    <button onClick={() => handleEdit(inv)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>✏️</button>
+                                    <button onClick={() => handleDelete(inv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>🗑️</button>
                                 </div>
                             </div>
                         </div>
