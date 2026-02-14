@@ -18,7 +18,8 @@ export default function Dashboard() {
         paid: 0,
         percentage: 0,
         monthlyIncome: 0,
-        monthlyExpenses: 0
+        monthlyExpenses: 0,
+        totalInvested: 0
     });
 
     useEffect(() => {
@@ -160,19 +161,19 @@ export default function Dashboard() {
                 >
                     <div className="label" style={{ color: 'rgba(255,255,255,0.8)' }}>Budget Forecast</div>
                     <div className="stat-value" style={{ color: 'white', marginTop: '4px', marginBottom: '20px', fontSize: '36px' }}>
-                        ₹{remaining.toLocaleString('en-IN')}
+                        ₹{(remaining || 0).toLocaleString('en-IN')}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                         <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '12px' }}>
                             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Income</div>
                             <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
-                                ₹{summary.monthlyIncome.toLocaleString('en-IN')}
+                                ₹{(summary.monthlyIncome || 0).toLocaleString('en-IN')}
                             </div>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '12px' }}>
                             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Expenses</div>
                             <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
-                                ₹{summary.monthlyExpenses.toLocaleString('en-IN')}
+                                ₹{(summary.monthlyExpenses || 0).toLocaleString('en-IN')}
                             </div>
                         </div>
                     </div>
@@ -187,7 +188,7 @@ export default function Dashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <div className="label" style={{ marginBottom: 0 }}>Loan Progress</div>
                         <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--primary)' }}>
-                            {Math.round(summary.percentage)}%
+                            {Math.round(summary.percentage || 0)}%
                         </div>
                     </div>
                     <div style={{ width: '100%', height: '8px', background: 'var(--border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '12px' }}>
@@ -199,8 +200,8 @@ export default function Dashboard() {
                         }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                        <span>₹{summary.paid.toLocaleString('en-IN')} cleared</span>
-                        <span>₹{summary.total.toLocaleString('en-IN')} outstanding</span>
+                        <span>₹{(summary.paid || 0).toLocaleString('en-IN')} cleared</span>
+                        <span>₹{(summary.total || 0).toLocaleString('en-IN')} outstanding</span>
                     </div>
                 </div>
 
@@ -218,7 +219,7 @@ export default function Dashboard() {
                         <div>
                             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total Invested</div>
                             <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--success)' }}>
-                                ₹{summary.totalInvested.toLocaleString('en-IN')}
+                                ₹{(summary.totalInvested || 0).toLocaleString('en-IN')}
                             </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
