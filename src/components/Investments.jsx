@@ -159,12 +159,20 @@ export default function Investments() {
                     investments.map(inv => (
                         <div key={inv.id} className="glass-card" style={{ padding: '24px', borderLeft: '8px solid #6366f1' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'flex-start' }}>
-                                <h3 style={{ fontSize: '18px', margin: 0, fontWeight: '700' }}>{inv.name}</h3>
-                                <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
-                                    {inv.roi}% RoI
-                                </span>
+                                <div style={{ flex: 1, paddingRight: '12px' }}>
+                                    <h3 style={{ fontSize: '18px', margin: 0, fontWeight: '700' }}>{inv.name}</h3>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                                        {inv.roi}% RoI
+                                    </span>
+                                    <div style={{ display: 'flex', gap: '4px', opacity: 0.6 }}>
+                                        <button onClick={() => handleEdit(inv)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '14px' }}>✏️</button>
+                                        <button onClick={() => handleDelete(inv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '14px' }}>🗑️</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                 <div>
                                     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '6px' }}>Invested</p>
                                     <p style={{ fontSize: '16px', fontWeight: '600' }}>{inv.principal.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}</p>
@@ -174,11 +182,6 @@ export default function Investments() {
                                     <p style={{ fontSize: '22px', fontWeight: '800', color: '#fff', letterSpacing: '-0.01em' }}>
                                         {Math.round(inv.maturityAmount).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                     </p>
-                                </div>
-
-                                <div style={{ position: 'absolute', top: '-60px', right: 0, display: 'flex', gap: '8px', opacity: 0.3 }}>
-                                    <button onClick={() => handleEdit(inv)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>✏️</button>
-                                    <button onClick={() => handleDelete(inv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>🗑️</button>
                                 </div>
                             </div>
                         </div>
