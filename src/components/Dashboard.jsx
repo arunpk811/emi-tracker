@@ -59,7 +59,7 @@ export default function Dashboard() {
     }, []);
 
     useEffect(() => {
-        const debtDocs = allEmis.filter(d => d.category !== 'investment');
+        const debtDocs = allEmis.filter(d => (d.category || 'debt') === 'debt');
         const bankGroups = {};
         debtDocs.forEach(doc => {
             if (!bankGroups[doc.bank]) bankGroups[doc.bank] = [];
