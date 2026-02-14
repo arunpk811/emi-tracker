@@ -8,6 +8,52 @@ export default function LoanSchedule() {
     const { bankName } = useParams(); // Get bank name from URL
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editCategory, setEditCategory] = useState('');
+    const [editAmount, setEditAmount] = useState('');
+
+    const startEditing = () => {
+        setEditName(decodeURIComponent(bankName));
+        setEditCategory(data[0]?.category || 'debt');
+        setIsEditing(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editName) return alert("Name is required");
+        setLoading(true);
+        try {
+            const batch = writeBatch(db);
+            const q = query(
+                collection(db, 'emis'),
+                where("uid", "==", auth.currentUser.uid),
+                where("bank", "==", decodeURIComponent(bankName))
+            );
+            const snapshot = await getDocs(q);
+
+            snapshot.docs.forEach((docSnap) => {
+                const updateData = {
+                    bank: editName,
+                    category: editCategory
+                };
+                if (editAmount && !isNaN(parseFloat(editAmount))) {
+                    updateData.amount = parseFloat(editAmount);
+                }
+                batch.update(docSnap.ref, updateData);
+            });
+
+            await batch.commit();
+            setIsEditing(false);
+            if (editName !== decodeURIComponent(bankName)) {
+                navigate(`/schedule/${encodeURIComponent(editName)}`, { replace: true });
+            }
+        } catch (error) {
+            console.error("Error updating loan:", error);
+            alert("Failed to update records.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const togglePaidStatus = async (id, currentStatus) => {
         try {
@@ -96,27 +142,123 @@ export default function LoanSchedule() {
                     >
                         <span style={{ fontSize: '20px' }}>←</span>
                     </div>
-                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {decodeURIComponent(bankName)}
-                    </h1>
+                    {!isEditing ? (
+                        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {decodeURIComponent(bankName)}
+                        </h1>
+                    ) : (
+                        <input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            style={{ margin: 0, fontSize: '18px', padding: '8px 12px', height: '48px' }}
+                        />
+                    )}
                 </div>
-                <button
-                    onClick={handleDeleteLoan}
-                    style={{
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: '#ef4444',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                        padding: '12px 16px',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: '800',
-                        width: 'auto'
-                    }}
-                >
-                    PURGE
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {!isEditing ? (
+                        <>
+                            <button
+                                onClick={startEditing}
+                                className="btn-secondary"
+                                style={{
+                                    padding: '12px 16px',
+                                    borderRadius: '16px',
+                                    fontSize: '13px',
+                                    fontWeight: '800',
+                                    width: 'auto'
+                                }}
+                            >
+                                EDIT
+                            </button>
+                            <button
+                                onClick={handleDeleteLoan}
+                                style={{
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    color: '#ef4444',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    padding: '12px 16px',
+                                    borderRadius: '16px',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: '800',
+                                    width: 'auto'
+                                }}
+                            >
+                                PURGE
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={handleSaveEdit}
+                                style={{
+                                    background: 'var(--primary)',
+                                    color: '#fff',
+                                    padding: '12px 16px',
+                                    borderRadius: '16px',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: '800',
+                                    width: 'auto',
+                                    border: 'none'
+                                }}
+                            >
+                                SAVE
+                            </button>
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                className="btn-secondary"
+                                style={{
+                                    padding: '12px 16px',
+                                    borderRadius: '16px',
+                                    fontSize: '13px',
+                                    fontWeight: '800',
+                                    width: 'auto'
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
+
+            {isEditing && (
+                <div className="glass-card" style={{ marginBottom: '24px', padding: '20px' }}>
+                    <div style={{ marginBottom: '16px' }}>
+                        <label className="label" style={{ marginBottom: '4px', fontSize: '11px' }}>Change Category</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                            {['debt', 'planned', 'investment'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setEditCategory(cat)}
+                                    className="btn-secondary"
+                                    style={{
+                                        background: editCategory === cat ? '#fff' : 'rgba(255,255,255,0.05)',
+                                        color: editCategory === cat ? '#000' : '#fff',
+                                        fontSize: '11px',
+                                        padding: '8px 0',
+                                        borderRadius: '12px',
+                                        border: editCategory === cat ? '1px solid #fff' : '1px solid transparent'
+                                    }}
+                                >
+                                    {cat === 'debt' ? 'LOAN' : cat === 'planned' ? 'PLANNED' : 'INVEST'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="label" style={{ marginBottom: '4px', fontSize: '11px' }}>Update Amount (Leave blank to keep current)</label>
+                        <input
+                            type="number"
+                            placeholder="New Monthly Amount"
+                            value={editAmount}
+                            onChange={(e) => setEditAmount(e.target.value)}
+                            style={{ marginBottom: 0 }}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="glass-card" style={{ marginBottom: '32px', padding: '28px', background: 'rgba(255,255,255,0.02)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>

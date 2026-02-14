@@ -8,6 +8,7 @@ export default function UploadEMI() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [bankName, setBankName] = useState('');
+    const [category, setCategory] = useState('debt');
 
     const handleFileUpload = (e) => {
         if (!bankName) {
@@ -88,7 +89,7 @@ export default function UploadEMI() {
                 principal: parseFloat(row[principalKey]) || 0,
                 interest: parseFloat(row[interestKey]) || 0,
                 balance: parseFloat(row[balanceKey]) || 0,
-                category: 'debt', // Default for uploads
+                category: category,
                 originalRow: JSON.stringify(row), // Keep raw just in case
                 createdAt: new Date().toISOString()
             };
@@ -154,6 +155,30 @@ export default function UploadEMI() {
                         onChange={(e) => setBankName(e.target.value)}
                         style={{ marginBottom: 0 }}
                     />
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Category</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                        {['debt', 'planned', 'investment'].map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setCategory(cat)}
+                                className="btn-secondary"
+                                style={{
+                                    background: category === cat ? '#fff' : 'rgba(255,255,255,0.05)',
+                                    color: category === cat ? '#000' : 'rgba(255,255,255,0.6)',
+                                    padding: '12px 0',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
+                                    textTransform: 'capitalize',
+                                    border: category === cat ? '1px solid #fff' : '1px solid transparent'
+                                }}
+                            >
+                                {cat === 'debt' ? 'Loan / Debt' : cat === 'planned' ? 'Planned Exp' : 'Investment'}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div style={{ marginBottom: '8px' }}>

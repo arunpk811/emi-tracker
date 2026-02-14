@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy, updateDoc, doc } from 'firebase/firestore';
+import BottomNav from './BottomNav';
 
 export default function EMITracker() {
     const navigate = useNavigate();
@@ -77,26 +78,10 @@ export default function EMITracker() {
     const availableYears = [...uniqueYears].sort().filter(y => !isNaN(y) && y > 1900 && y < 2100);
 
     return (
-        <div className="container fade-in">
+        <div className="container fade-in" style={{ paddingBottom: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div
-                        onClick={() => navigate('/dashboard')}
-                        style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '16px',
-                            background: 'rgba(255,255,255,0.05)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}
-                    >
-                        <span style={{ fontSize: '20px' }}>←</span>
-                    </div>
-                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>My EMIs</h1>
+                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>My Tracker</h1>
                 </div>
             </div>
 
@@ -160,59 +145,84 @@ export default function EMITracker() {
                     filtered.length === 0 ? (
                         <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No EMIs found for this period.</p>
                     ) : (
-                        filtered.map((item, index) => {
-                            const isPaid = item.status === 'paid' || (item.status === undefined && new Date(item.date) <= new Date());
+                        ['debt', 'planned', 'investment'].map(cat => {
+                            const items = filtered.filter(f => (f.category || 'debt') === cat);
+                            if (items.length === 0) return null;
+
                             return (
-                                <div
-                                    key={item.id || index}
-                                    className="glass-card"
-                                    onClick={() => navigate(`/schedule/${encodeURIComponent(item.bank)}`)}
-                                    style={{
-                                        padding: '16px',
-                                        marginBottom: '10px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        cursor: 'pointer',
-                                        opacity: isPaid ? 0.7 : 1
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                        <div
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                togglePaidStatus(item.id, item.status);
-                                            }}
-                                            style={{
-                                                width: '28px',
-                                                height: '28px',
-                                                borderRadius: '50%',
-                                                border: isPaid ? 'none' : '2px solid rgba(255,255,255,0.2)',
-                                                background: isPaid ? '#4ade80' : 'transparent',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s ease'
-                                            }}
-                                        >
-                                            {isPaid && <span style={{ color: '#000', fontSize: '14px', fontWeight: '900' }}>✓</span>}
+                                <div key={cat} style={{ marginBottom: '32px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                        <div style={{
+                                            padding: '4px 12px',
+                                            borderRadius: '20px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            textTransform: 'uppercase',
+                                            background: cat === 'debt' ? 'rgba(239, 68, 68, 0.1)' : cat === 'planned' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                            color: cat === 'debt' ? 'var(--danger)' : cat === 'planned' ? 'var(--primary)' : 'var(--success)',
+                                            border: '1px solid currentColor'
+                                        }}>
+                                            {cat === 'debt' ? 'Loans' : cat === 'planned' ? 'Planned Expenses' : 'Investments'}
                                         </div>
-                                        <div>
-                                            <h4 style={{ marginBottom: '4px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>{item.bank}</h4>
-                                            <p style={{ fontSize: '12px', color: isPaid ? '#4ade80' : 'var(--text-muted)', fontWeight: isPaid ? '700' : '400' }}>
-                                                {isPaid ? 'PAID' : new Date(item.date).toLocaleDateString()}
-                                            </p>
-                                        </div>
+                                        <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
                                     </div>
-                                    <div style={{ fontWeight: 600, fontSize: '18px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>
-                                        {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                    </div>
+                                    {items.map((item, index) => {
+                                        const isPaid = item.status === 'paid' || (item.status === undefined && new Date(item.date) <= new Date());
+                                        return (
+                                            <div
+                                                key={item.id || index}
+                                                className="glass-card"
+                                                onClick={() => navigate(`/schedule/${encodeURIComponent(item.bank)}`)}
+                                                style={{
+                                                    padding: '16px',
+                                                    marginBottom: '10px',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    cursor: 'pointer',
+                                                    opacity: isPaid ? 0.7 : 1
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                    <div
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            togglePaidStatus(item.id, item.status);
+                                                        }}
+                                                        style={{
+                                                            width: '28px',
+                                                            height: '28px',
+                                                            borderRadius: '50%',
+                                                            border: isPaid ? 'none' : '2px solid rgba(255,255,255,0.2)',
+                                                            background: isPaid ? '#4ade80' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s ease'
+                                                        }}
+                                                    >
+                                                        {isPaid && <span style={{ color: '#000', fontSize: '14px', fontWeight: '900' }}>✓</span>}
+                                                    </div>
+                                                    <div>
+                                                        <h4 style={{ marginBottom: '4px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>{item.bank}</h4>
+                                                        <p style={{ fontSize: '12px', color: isPaid ? '#4ade80' : 'var(--text-muted)', fontWeight: isPaid ? '700' : '400' }}>
+                                                            {isPaid ? 'PAID' : new Date(item.date).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div style={{ fontWeight: 600, fontSize: '18px', textDecoration: isPaid ? 'line-through' : 'none', color: isPaid ? 'rgba(255,255,255,0.4)' : '#fff' }}>
+                                                    {item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             );
                         })
                     )}
             </div>
+            <BottomNav />
         </div>
     );
 }

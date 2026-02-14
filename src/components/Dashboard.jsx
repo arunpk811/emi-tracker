@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import BottomNav from './BottomNav';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -12,7 +13,6 @@ export default function Dashboard() {
     const [allEmis, setAllEmis] = useState([]);
     const [allIncomes, setAllIncomes] = useState([]);
     const [allBorrowers, setAllBorrowers] = useState([]);
-    const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [summary, setSummary] = useState({
         total: 0,
         paid: 0,
@@ -126,7 +126,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <div className="container fade-in" style={{ paddingBottom: '200px' }}>
+            <div className="container fade-in" style={{ paddingBottom: '100px' }}>
                 {/* Header */}
                 <div style={{ marginBottom: '24px' }}>
                     <div className="label" style={{ marginBottom: '4px' }}>Dashboard</div>
@@ -174,7 +174,11 @@ export default function Dashboard() {
                 </div>
 
                 {/* Debt Progress */}
-                <div className="glass-card">
+                <div
+                    className="glass-card"
+                    onClick={() => navigate('/tracker')}
+                    style={{ cursor: 'pointer' }}
+                >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <div className="label" style={{ marginBottom: 0 }}>Debt Progress</div>
                         <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--primary)' }}>
@@ -224,211 +228,10 @@ export default function Dashboard() {
                 )}
             </div>
 
-            {/* Quick Actions - Fixed at Bottom */}
-            <div style={{
-                position: 'fixed',
-                bottom: '70px',
-                left: 0,
-                right: 0,
-                background: 'var(--bg-primary)',
-                borderTop: '1px solid var(--border)',
-                padding: '12px 20px',
-                zIndex: 100
-            }}>
-                <div className="label" style={{ marginBottom: '8px', fontSize: '11px' }}>Quick Actions</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                    <button
-                        onClick={() => navigate('/tracker')}
-                        className="btn-secondary"
-                        style={{
-                            padding: '12px 8px',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            minHeight: 'auto'
-                        }}
-                    >
-                        <span style={{ fontSize: '24px' }}>📊</span>
-                        <span style={{ fontSize: '10px', fontWeight: '600' }}>Tracker</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/income')}
-                        className="btn-secondary"
-                        style={{
-                            padding: '12px 8px',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            minHeight: 'auto'
-                        }}
-                    >
-                        <span style={{ fontSize: '24px' }}>💰</span>
-                        <span style={{ fontSize: '10px', fontWeight: '600' }}>Income</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/borrowers')}
-                        className="btn-secondary"
-                        style={{
-                            padding: '12px 8px',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            minHeight: 'auto'
-                        }}
-                    >
-                        <span style={{ fontSize: '24px' }}>🤝</span>
-                        <span style={{ fontSize: '10px', fontWeight: '600' }}>Lending</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/upload')}
-                        className="btn-secondary"
-                        style={{
-                            padding: '12px 8px',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            minHeight: 'auto'
-                        }}
-                    >
-                        <span style={{ fontSize: '24px' }}>📂</span>
-                        <span style={{ fontSize: '10px', fontWeight: '600' }}>Import</span>
-                    </button>
-                </div>
-            </div>
 
-            {/* Bottom Navigation Bar */}
-            <div style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: 'var(--surface)',
-                borderTop: '1px solid var(--border)',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                padding: '8px 0',
-                zIndex: 1000,
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
-            }}>
-                <button
-                    onClick={() => navigate('/tracker')}
-                    className="btn-secondary"
-                    style={{
-                        border: 'none',
-                        background: 'transparent',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        padding: '8px',
-                        borderRadius: 0
-                    }}
-                >
-                    <span style={{ fontSize: '20px' }}>📊</span>
-                    <span style={{ fontSize: '10px', fontWeight: '600' }}>Tracker</span>
-                </button>
-                <button
-                    onClick={() => navigate('/income')}
-                    className="btn-secondary"
-                    style={{
-                        border: 'none',
-                        background: 'transparent',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        padding: '8px',
-                        borderRadius: 0
-                    }}
-                >
-                    <span style={{ fontSize: '20px' }}>💰</span>
-                    <span style={{ fontSize: '10px', fontWeight: '600' }}>Income</span>
-                </button>
-                <button
-                    onClick={() => navigate('/borrowers')}
-                    className="btn-secondary"
-                    style={{
-                        border: 'none',
-                        background: 'transparent',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        padding: '8px',
-                        borderRadius: 0
-                    }}
-                >
-                    <span style={{ fontSize: '20px' }}>🤝</span>
-                    <span style={{ fontSize: '10px', fontWeight: '600' }}>Lending</span>
-                </button>
-                <button
-                    onClick={() => setShowMoreMenu(!showMoreMenu)}
-                    className="btn-secondary"
-                    style={{
-                        border: 'none',
-                        background: 'transparent',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        padding: '8px',
-                        borderRadius: 0
-                    }}
-                >
-                    <span style={{ fontSize: '20px' }}>⋯</span>
-                    <span style={{ fontSize: '10px', fontWeight: '600' }}>More</span>
-                </button>
-            </div>
 
-            {/* More Menu Overlay */}
-            {showMoreMenu && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.8)',
-                        zIndex: 2000,
-                        animation: 'fadeIn 0.2s ease-out'
-                    }}
-                    onClick={() => setShowMoreMenu(false)}
-                >
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            background: 'var(--surface)',
-                            padding: '24px',
-                            borderTopLeftRadius: '20px',
-                            borderTopRightRadius: '20px',
-                            animation: 'slideUp 0.3s ease-out'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ fontSize: '18px', margin: 0 }}>More Options</h2>
-                            <button onClick={() => setShowMoreMenu(false)} className="btn-secondary" style={{ padding: '8px', width: '36px', height: '36px' }}>
-                                ✕
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                            {moreMenuItems.map((item) => (
-                                <button
-                                    key={item.path}
-                                    onClick={() => { setShowMoreMenu(false); navigate(item.path); }}
-                                    className="btn-secondary"
-                                    style={{ justifyContent: 'flex-start', padding: '14px 16px', width: '100%' }}
-                                >
-                                    <span style={{ fontSize: '20px' }}>{item.icon}</span>
-                                    <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
-                                </button>
-                            ))}
-                        </div>
-
-                        <button
-                            onClick={() => { auth.signOut(); localStorage.removeItem('user'); navigate('/'); }}
-                            className="btn-secondary"
-                            style={{ width: '100%', color: 'var(--danger)', marginTop: '8px' }}
-                        >
-                            🚪 Sign Out
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Bottom Nav Component */}
+            <BottomNav />
         </>
     );
 }

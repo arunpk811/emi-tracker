@@ -149,17 +149,18 @@ export default function ScheduledPayments() {
 
                     <div style={{ marginBottom: '32px' }}>
                         <label style={{ display: 'block', marginBottom: '12px', fontSize: '14px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Type of commitment</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                             <div
                                 onClick={() => setCategory('debt')}
                                 style={{
                                     background: category === 'debt' ? '#fff' : 'rgba(255,255,255,0.05)',
                                     color: category === 'debt' ? '#000' : 'rgba(255,255,255,0.6)',
-                                    padding: '16px',
-                                    borderRadius: '18px',
+                                    padding: '12px 8px',
+                                    borderRadius: '14px',
                                     cursor: 'pointer',
                                     textAlign: 'center',
                                     fontWeight: '800',
+                                    fontSize: '11px',
                                     border: category === 'debt' ? '1px solid #fff' : '1px solid transparent',
                                     transition: 'all 0.3s ease'
                                 }}
@@ -167,15 +168,33 @@ export default function ScheduledPayments() {
                                 Loan / Debt
                             </div>
                             <div
+                                onClick={() => setCategory('planned')}
+                                style={{
+                                    background: category === 'planned' ? '#fff' : 'rgba(255,255,255,0.05)',
+                                    color: category === 'planned' ? '#000' : 'rgba(255,255,255,0.6)',
+                                    padding: '12px 8px',
+                                    borderRadius: '14px',
+                                    cursor: 'pointer',
+                                    textAlign: 'center',
+                                    fontWeight: '800',
+                                    fontSize: '11px',
+                                    border: category === 'planned' ? '1px solid #fff' : '1px solid transparent',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                Planned Expense
+                            </div>
+                            <div
                                 onClick={() => setCategory('investment')}
                                 style={{
                                     background: category === 'investment' ? '#fff' : 'rgba(255,255,255,0.05)',
                                     color: category === 'investment' ? '#000' : 'rgba(255,255,255,0.6)',
-                                    padding: '16px',
-                                    borderRadius: '18px',
+                                    padding: '12px 8px',
+                                    borderRadius: '14px',
                                     cursor: 'pointer',
                                     textAlign: 'center',
                                     fontWeight: '800',
+                                    fontSize: '11px',
                                     border: category === 'investment' ? '1px solid #fff' : '1px solid transparent',
                                     transition: 'all 0.3s ease'
                                 }}

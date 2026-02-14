@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import BottomNav from './BottomNav';
 
 export default function Borrowers() {
     const navigate = useNavigate();
@@ -145,25 +146,9 @@ export default function Borrowers() {
     const outstanding = totalLent - totalRecovered;
 
     return (
-        <div className="container fade-in">
+        <div className="container fade-in" style={{ paddingBottom: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div
-                        onClick={() => navigate('/dashboard')}
-                        style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '16px',
-                            background: 'rgba(255,255,255,0.05)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}
-                    >
-                        <span style={{ fontSize: '20px' }}>←</span>
-                    </div>
                     <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>Borrowers</h1>
                 </div>
                 <div
@@ -402,6 +387,7 @@ export default function Borrowers() {
                     text-transform: uppercase;
                 }
             `}</style>
+            <BottomNav />
         </div>
     );
 }
