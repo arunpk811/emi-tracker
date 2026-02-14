@@ -93,28 +93,40 @@ export default function EMITracker() {
                     </select>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                    {months.map((m, idx) => (
-                        <div
-                            key={m}
-                            onClick={() => setMonth(idx)}
-                            style={{
-                                padding: '12px 0',
-                                textAlign: 'center',
-                                borderRadius: '14px',
-                                fontSize: '13px',
-                                fontWeight: month === idx ? '700' : '500',
-                                cursor: 'pointer',
-                                background: month === idx ? '#fff' : 'rgba(255,255,255,0.05)',
-                                color: month === idx ? '#000' : 'rgba(255,255,255,0.6)',
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                border: month === idx ? '1px solid #fff' : '1px solid transparent',
-                                transform: month === idx ? 'scale(1.05)' : 'scale(1)'
-                            }}
-                        >
-                            {m}
-                        </div>
-                    ))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {[0, 1, 2].map((offset) => {
+                        const date = new Date();
+                        const targetDate = new Date(date.getFullYear(), date.getMonth() + offset, 1);
+                        const mIdx = targetDate.getMonth();
+                        const mYear = targetDate.getFullYear();
+                        const mName = months[mIdx];
+                        const isSelected = month === mIdx && year === mYear;
+
+                        return (
+                            <div
+                                key={`${mIdx}-${mYear}`}
+                                onClick={() => {
+                                    setMonth(mIdx);
+                                    setYear(mYear);
+                                }}
+                                style={{
+                                    padding: '12px 0',
+                                    textAlign: 'center',
+                                    borderRadius: '14px',
+                                    fontSize: '13px',
+                                    fontWeight: isSelected ? '700' : '500',
+                                    cursor: 'pointer',
+                                    background: isSelected ? '#fff' : 'rgba(255,255,255,0.05)',
+                                    color: isSelected ? '#000' : 'rgba(255,255,255,0.6)',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    border: isSelected ? '1px solid #fff' : '1px solid transparent',
+                                    transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                                }}
+                            >
+                                {mName} {mYear !== new Date().getFullYear() ? mYear : ''}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
