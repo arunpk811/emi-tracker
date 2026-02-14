@@ -33,8 +33,8 @@ export default function BottomNav() {
                 background: 'var(--surface)',
                 borderTop: '1px solid var(--border)',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                padding: '8px 0',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                padding: '10px 4px',
                 zIndex: 1000,
                 backdropFilter: 'blur(10px)',
                 boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
@@ -47,7 +47,7 @@ export default function BottomNav() {
                         background: 'transparent',
                         flexDirection: 'column',
                         gap: '4px',
-                        padding: '8px',
+                        padding: '6px 2px',
                         borderRadius: 0,
                         color: isActive('/dashboard') ? 'var(--primary)' : 'var(--text-primary)'
                     }}
@@ -65,7 +65,7 @@ export default function BottomNav() {
                             background: 'transparent',
                             flexDirection: 'column',
                             gap: '4px',
-                            padding: '8px',
+                            padding: '6px 2px',
                             borderRadius: 0,
                             color: isActive(item.path) ? 'var(--primary)' : 'var(--text-primary)'
                         }}
@@ -82,7 +82,7 @@ export default function BottomNav() {
                         background: 'transparent',
                         flexDirection: 'column',
                         gap: '4px',
-                        padding: '8px',
+                        padding: '6px 2px',
                         borderRadius: 0
                     }}
                 >
