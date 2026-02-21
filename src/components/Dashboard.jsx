@@ -193,7 +193,7 @@ export default function Dashboard() {
                 {/* 2. Loan Progress */}
                 <div
                     className="glass-card"
-                    onClick={() => navigate('/tracker')}
+                    onClick={() => navigate('/loans-overview')}
                     style={{ cursor: 'pointer', marginBottom: '16px' }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
