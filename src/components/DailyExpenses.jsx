@@ -15,8 +15,6 @@ export default function DailyExpenses() {
     const [type, setType] = useState('Expense'); // 'Expense' or 'Income'
     
     const [records, setRecords] = useState([]);
-    const [monthlyIncome, setMonthlyIncome] = useState(0);
-    const [monthlyEmis, setMonthlyEmis] = useState(0);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
 
@@ -52,51 +50,7 @@ export default function DailyExpenses() {
                 setLoading(false);
             });
 
-            // Fetch monthly income from the 'income' collection for the current month
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            const incomeQ = query(collection(db, 'income'), where("uid", "==", currentUser.uid));
-            const unsubIncome = onSnapshot(incomeQ, (snapshot) => {
-                const total = snapshot.docs
-                    .map(doc => doc.data())
-                    .filter(inc => {
-                        const d = new Date(inc.date || inc.createdAt);
-                        return d.getMonth() === currentMonth && d.getFullYear() === currentYear && inc.credited;
-                    })
-                    .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-                setMonthlyIncome(total);
-            });
-
-            return () => {
-                unsubRecords();
-                unsubIncome();
-            };
-        });
-
-        return () => unsubscribeAuth();
-    }, []);
-
-    useEffect(() => {
-        const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-            if (!currentUser) return;
-
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-
-            // Fetch EMIs for the current month to include in balance calculation
-            const emiQ = query(collection(db, 'emis'), where("uid", "==", currentUser.uid));
-            const unsubEmi = onSnapshot(emiQ, (snapshot) => {
-                const total = snapshot.docs
-                    .map(doc => doc.data())
-                    .filter(emi => {
-                        const d = new Date(emi.date);
-                        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-                    })
-                    .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-                setMonthlyEmis(total);
-            });
-
-            return () => unsubEmi();
+            return () => unsubRecords();
         });
 
         return () => unsubscribeAuth();
@@ -169,8 +123,6 @@ export default function DailyExpenses() {
         .filter(r => r.type === 'Income')
         .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
-    const netBalance = (monthlyIncome + totalDailyIncome) - (totalDailyExpenses + monthlyEmis);
-
     return (
         <div className="container fade-in" style={{ paddingBottom: '100px' }}>
             <div style={{ marginBottom: '24px' }}>
@@ -178,28 +130,27 @@ export default function DailyExpenses() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Track your everyday spending</p>
             </div>
 
-            {/* Tally Card */}
             <div className="glass-card" style={{ 
                 background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)', 
                 border: 'none',
                 color: 'white',
-                padding: '24px'
+                padding: '28px'
             }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <div style={{ fontSize: '11px', opacity: 0.8, fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Total Income</div>
-                        <div style={{ fontSize: '20px', fontWeight: '800' }}>₹{(monthlyIncome + totalDailyIncome).toLocaleString('en-IN')}</div>
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '11px', opacity: 0.8, fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Daily Expenses</div>
-                        <div style={{ fontSize: '20px', fontWeight: '800', color: '#fda4af' }}>
+                        <div style={{ fontSize: '12px', opacity: 0.8, fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                            Daily Expenses (This Month)
+                        </div>
+                        <div style={{ fontSize: '36px', fontWeight: '800' }}>
                             ₹{totalDailyExpenses.toLocaleString('en-IN')}
                         </div>
                     </div>
-                </div>
-                <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ fontSize: '12px', opacity: 0.8, fontWeight: '600', marginBottom: '4px' }}>Current Balance</div>
-                    <div style={{ fontSize: '32px', fontWeight: '800' }}>₹{netBalance.toLocaleString('en-IN')}</div>
+                    {totalDailyIncome > 0 && (
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '11px', opacity: 0.8, fontWeight: '600', marginBottom: '4px' }}>Daily Income</div>
+                            <div style={{ fontSize: '18px', fontWeight: '700', color: '#4ade80' }}>+₹{totalDailyIncome.toLocaleString('en-IN')}</div>
+                        </div>
+                    )}
                 </div>
             </div>
 

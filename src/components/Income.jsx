@@ -97,8 +97,11 @@ export default function Income() {
 
     const handleToggleCredited = async (id, currentStatus) => {
         try {
+            // If currentStatus is undefined (old record), we treat it as true (checked).
+            // So toggling should move it to false.
+            const newStatus = currentStatus === false ? true : false;
             await updateDoc(doc(db, 'income', id), {
-                credited: !currentStatus,
+                credited: newStatus,
                 updatedAt: new Date().toISOString()
             });
         } catch (error) {
@@ -159,7 +162,7 @@ export default function Income() {
     });
 
     const totalIncome = filteredIncomes
-        .filter(inc => inc.credited)
+        .filter(inc => inc.credited !== false)
         .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -296,11 +299,11 @@ export default function Income() {
                 {loading ? <p style={{ textAlign: 'center' }}>Loading...</p> :
                     filteredIncomes.length === 0 ? <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No income records for this period.</p> :
                         filteredIncomes.map(item => (
-                            <div key={item.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: item.credited ? 1 : 0.6 }}>
+                            <div key={item.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: (item.credited !== false) ? 1 : 0.6 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <input
                                         type="checkbox"
-                                        checked={item.credited || false}
+                                        checked={item.credited !== false}
                                         onChange={() => handleToggleCredited(item.id, item.credited)}
                                         style={{ width: '20px', height: '20px', margin: 0, cursor: 'pointer' }}
                                         title="Mark as Credited"

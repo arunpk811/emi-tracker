@@ -15,12 +15,23 @@ export default function Dashboard() {
     const [allBorrowers, setAllBorrowers] = useState([]);
     const [allInvestments, setAllInvestments] = useState([]);
     const [allDailyRecords, setAllDailyRecords] = useState([]);
+    const [showBalanceBreakdown, setShowBalanceBreakdown] = useState(false);
     const [summary, setSummary] = useState({
         total: 0,
         paid: 0,
         percentage: 0,
         monthlyIncome: 0,
-        monthlyExpenses: 0,
+        dailyIncome: 0,
+        scheduledExpenses: 0,
+        totalSpent: 0,
+        expectedBankBalance: 0,
+        breakingDown: {
+            income: 0,
+            dailyIncome: 0,
+            monthlyPaid: 0,
+            dailyExpenses: 0,
+            invested: 0
+        },
         totalInvested: 0,
         expectedMaturity: 0
     });
@@ -112,14 +123,21 @@ export default function Dashboard() {
         const paid = debtDocs.filter(d => d.status === 'paid' || (d.status === undefined && new Date(d.date) <= today))
             .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
-        const monthlyExpenses = allEmis.filter(d => {
+        const monthlyEmisList = allEmis.filter(d => {
             const dDate = new Date(d.date);
             return dDate.getMonth() === selectedMonth && dDate.getFullYear() === selectedYear;
-        }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+        });
+
+        const monthlyExpenses = monthlyEmisList.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+        const monthlyPaid = monthlyEmisList
+            .filter(d => d.status === 'paid' || d.status === 'done' || (d.status === undefined && new Date(d.date) <= today))
+            .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
         const monthlyIncome = allIncomes.filter(inc => {
             const d = new Date(inc.date || inc.createdAt);
-            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && inc.credited;
+            // Treat undefined (old records) as credited by default for better migration, 
+            // but exclude if explicitly set to false
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && inc.credited !== false;
         }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
         const monthlyDailyExpenses = allDailyRecords.filter(r => {
@@ -132,18 +150,37 @@ export default function Dashboard() {
             return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && r.type === 'Income';
         }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
+        const monthlyInvestmentsList = allInvestments.filter(inv => {
+            const d = new Date(inv.date || inv.createdAt);
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+        });
+        const monthlyInvestedAmount = monthlyInvestmentsList.reduce((acc, curr) => acc + (parseFloat(curr.principal) || 0), 0);
+
         setSummary({
             total: finalTotal,
             paid,
             percentage: finalTotal > 0 ? (paid / finalTotal) * 100 : 0,
-            monthlyIncome: monthlyIncome + monthlyDailyIncome,
-            monthlyExpenses: monthlyExpenses + monthlyDailyExpenses,
+            monthlyIncome,
+            dailyIncome: monthlyDailyIncome,
+            scheduledExpenses: monthlyExpenses + monthlyInvestedAmount,
+            totalSpent: monthlyPaid + monthlyDailyExpenses + monthlyInvestedAmount,
+            expectedBankBalance: (monthlyIncome + monthlyDailyIncome) - (monthlyPaid + monthlyDailyExpenses + monthlyInvestedAmount),
+            breakingDown: {
+                income: monthlyIncome,
+                dailyIncome: monthlyDailyIncome,
+                monthlyPaid: monthlyPaid,
+                dailyExpenses: monthlyDailyExpenses,
+                invested: monthlyInvestedAmount
+            },
             totalInvested: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.principal) || 0), 0),
             expectedMaturity: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.maturityAmount) || 0), 0)
         });
     }, [allEmis, allIncomes, allInvestments, allDailyRecords, selectedMonth, selectedYear]);
 
-    const remaining = summary.monthlyIncome - summary.monthlyExpenses;
+    const remaining = (summary.monthlyIncome + summary.dailyIncome) - (summary.scheduledExpenses + (allDailyRecords.filter(r => {
+        const d = new Date(r.date);
+        return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && (r.type === 'Expense' || !r.type);
+    }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0)));
 
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const years = Array.from({ length: 5 }, (_, i) => today.getFullYear() - 1 + i);
@@ -182,46 +219,73 @@ export default function Dashboard() {
                     </select>
                 </div>
 
-                {/* 1. Budget Forecast Card */}
+                {/* Unified Finance Command Card */}
                 <div
                     className="glass-card"
-                    onClick={() => navigate('/tracker')}
-                    style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #1e40af 100%)', border: 'none', marginBottom: '16px', cursor: 'pointer' }}
+                    style={{
+                        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        padding: '24px',
+                        marginBottom: '24px',
+                        color: 'white'
+                    }}
                 >
-                    <div className="label" style={{ color: 'rgba(255,255,255,0.8)' }}>Budget Forecast</div>
-                    <div className="stat-value" style={{ color: 'white', marginTop: '4px', marginBottom: '20px', fontSize: '36px' }}>
-                        ₹{(remaining || 0).toLocaleString('en-IN')}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Income</div>
-                            <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
-                                ₹{(summary.monthlyIncome || 0).toLocaleString('en-IN')}
+                    {/* Primary Balances */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+                        <div onClick={() => navigate('/tracker')} style={{ cursor: 'pointer' }}>
+                            <div className="label" style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Budget Forecast</div>
+                            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--primary)' }}>
+                                ₹{(remaining || 0).toLocaleString('en-IN')}
                             </div>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>Ideal End Balance</div>
                         </div>
-                        <div style={{ background: 'rgba(255,255,255,0.15)', padding: '14px', borderRadius: '12px' }}>
-                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Expenses</div>
-                            <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
-                                ₹{(summary.monthlyExpenses || 0).toLocaleString('en-IN')}
+                        <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '20px' }}>
+                            <div className="label" style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>Expected Bank Balance</div>
+                            <div style={{ fontSize: '28px', fontWeight: '800', color: '#10b981' }}>
+                                ₹{summary.expectedBankBalance.toLocaleString('en-IN')}
                             </div>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>Current Liquidity</div>
                         </div>
                     </div>
-                </div>
 
-                {/* Daily Tracking Card */}
-                <div 
-                    className="glass-card"
-                    onClick={() => navigate('/daily-expenses')}
-                    style={{ cursor: 'pointer', marginBottom: '16px', borderLeft: '8px solid var(--danger)', background: 'rgba(239, 68, 68, 0.05)' }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <div className="label" style={{ marginBottom: 0 }}>Daily Tracking</div>
-                        <div style={{ fontSize: '20px' }}>🏃</div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '20px' }} />
+
+                    {/* Secondary Breakdown */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
                         <div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Monthly Spend</div>
-                            <div style={{ fontSize: '24px', fontWeight: '800' }}>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px', fontWeight: '600' }}>TOTAL INCOME</div>
+                            <div style={{ fontSize: '18px', fontWeight: '700' }}>₹{(summary.monthlyIncome + summary.dailyIncome).toLocaleString('en-IN')}</div>
+                            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>Main + Daily</div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px', fontWeight: '600' }}>TOTAL PLANNED</div>
+                            <div style={{ fontSize: '18px', fontWeight: '700' }}>
+                                ₹{(summary.scheduledExpenses + (allDailyRecords.filter(r => {
+                                    const d = new Date(r.date);
+                                    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && (r.type === 'Expense' || !r.type);
+                                }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0))).toLocaleString('en-IN')}
+                            </div>
+                            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>Loans + Daily + Inv.</div>
+                        </div>
+                    </div>
+
+                    {/* Daily Tracking Info Section */}
+                    <div
+                        onClick={() => navigate('/daily-expenses')}
+                        style={{
+                            background: 'rgba(255,255,255,0.03)',
+                            padding: '16px',
+                            borderRadius: '16px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            border: '1px solid rgba(255,255,255,0.05)'
+                        }}
+                    >
+                        <div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: '700', textTransform: 'uppercase' }}>Daily Spend Tracking</div>
+                            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '2px' }}>
                                 ₹{(allDailyRecords.filter(r => {
                                     const d = new Date(r.date);
                                     return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && (r.type === 'Expense' || !r.type);
@@ -229,12 +293,53 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Net Balance</div>
-                            <div style={{ fontSize: '24px', fontWeight: '800', color: (summary.monthlyIncome - summary.monthlyExpenses) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                                ₹{(summary.monthlyIncome - summary.monthlyExpenses).toLocaleString('en-IN')}
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: '700' }}>PAID SO FAR</div>
+                            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '2px', color: '#fda4af' }}>
+                                ₹{summary.totalSpent.toLocaleString('en-IN')}
                             </div>
                         </div>
                     </div>
+
+                    {/* Breakdown Toggle */}
+                    <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setShowBalanceBreakdown(!showBalanceBreakdown); }}
+                            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', padding: '4px 12px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                            {showBalanceBreakdown ? 'Hide Details' : 'View Calculation Breakdown'}
+                        </button>
+                    </div>
+
+                    {showBalanceBreakdown && (
+                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', fontSize: '12px', marginTop: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Bank Income (A):</span>
+                                <span style={{ fontWeight: '700' }}>+₹{summary.breakingDown.income.toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Daily Income (B):</span>
+                                <span style={{ fontWeight: '700' }}>+₹{summary.breakingDown.dailyIncome.toLocaleString()}</span>
+                            </div>
+                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '10px 0' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Loans Paid (C):</span>
+                                <span style={{ fontWeight: '700', color: '#fda4af' }}>-₹{summary.breakingDown.monthlyPaid.toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Daily Spend (D):</span>
+                                <span style={{ fontWeight: '700', color: '#fda4af' }}>-₹{summary.breakingDown.dailyExpenses.toLocaleString()}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.6)' }}>Invested (E):</span>
+                                <span style={{ fontWeight: '700', color: '#fda4af' }}>-₹{summary.breakingDown.invested.toLocaleString()}</span>
+                            </div>
+                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)', margin: '10px 0' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '800', color: '#10b981' }}>
+                                <span>Exp. Bank Bal (A+B-C-D-E):</span>
+                                <span>₹{summary.expectedBankBalance.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* 2. Loan Progress */}
