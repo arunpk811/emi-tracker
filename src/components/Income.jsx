@@ -61,6 +61,7 @@ export default function Income() {
                     name,
                     amount: parseFloat(amount),
                     date: incomeDate,
+                    credited: false,
                     createdAt: new Date().toISOString()
                 });
             }
@@ -91,6 +92,17 @@ export default function Income() {
             await deleteDoc(doc(db, 'income', id));
         } catch (error) {
             console.error("Error deleting income:", error);
+        }
+    };
+
+    const handleToggleCredited = async (id, currentStatus) => {
+        try {
+            await updateDoc(doc(db, 'income', id), {
+                credited: !currentStatus,
+                updatedAt: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error("Error updating credited status:", error);
         }
     };
 
@@ -146,7 +158,9 @@ export default function Income() {
         return d.getMonth() === parseInt(selectedMonth) && d.getFullYear() === parseInt(selectedYear);
     });
 
-    const totalIncome = filteredIncomes.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+    const totalIncome = filteredIncomes
+        .filter(inc => inc.credited)
+        .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const years = Array.from({ length: 11 }, (_, i) => today.getFullYear() - 5 + i);
@@ -282,12 +296,21 @@ export default function Income() {
                 {loading ? <p style={{ textAlign: 'center' }}>Loading...</p> :
                     filteredIncomes.length === 0 ? <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No income records for this period.</p> :
                         filteredIncomes.map(item => (
-                            <div key={item.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <p style={{ fontWeight: '500', fontSize: '16px' }}>{item.name}</p>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                        {months[new Date(item.date || item.createdAt).getMonth()]} {new Date(item.date || item.createdAt).getFullYear()}
-                                    </p>
+                            <div key={item.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: item.credited ? 1 : 0.6 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={item.credited || false}
+                                        onChange={() => handleToggleCredited(item.id, item.credited)}
+                                        style={{ width: '20px', height: '20px', margin: 0, cursor: 'pointer' }}
+                                        title="Mark as Credited"
+                                    />
+                                    <div>
+                                        <p style={{ fontWeight: '500', fontSize: '16px' }}>{item.name}</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                            {months[new Date(item.date || item.createdAt).getMonth()]} {new Date(item.date || item.createdAt).getFullYear()}
+                                        </p>
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <span style={{ fontWeight: '600', color: '#4ade80', marginRight: '5px' }}>

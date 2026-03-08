@@ -14,6 +14,7 @@ export default function Dashboard() {
     const [allIncomes, setAllIncomes] = useState([]);
     const [allBorrowers, setAllBorrowers] = useState([]);
     const [allInvestments, setAllInvestments] = useState([]);
+    const [allDailyRecords, setAllDailyRecords] = useState([]);
     const [summary, setSummary] = useState({
         total: 0,
         paid: 0,
@@ -25,7 +26,7 @@ export default function Dashboard() {
     });
 
     useEffect(() => {
-        let unsubEmis, unsubIncomes, unsubBorrowers, unsubInvestments;
+        let unsubEmis, unsubIncomes, unsubBorrowers, unsubInvestments, unsubDaily;
 
         const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
             if (unsubEmis) unsubEmis();
@@ -58,6 +59,12 @@ export default function Dashboard() {
                 (snapshot) => setAllInvestments(snapshot.docs.map(doc => doc.data())),
                 (err) => console.error("Investments Listener Error:", err)
             );
+
+            unsubDaily = onSnapshot(
+                query(collection(db, 'daily_records'), where("uid", "==", currentUser.uid)),
+                (snapshot) => setAllDailyRecords(snapshot.docs.map(doc => doc.data())),
+                (err) => console.error("Daily Records Listener Error:", err)
+            );
         });
 
         return () => {
@@ -66,6 +73,7 @@ export default function Dashboard() {
             if (unsubIncomes) unsubIncomes();
             if (unsubBorrowers) unsubBorrowers();
             if (unsubInvestments) unsubInvestments();
+            if (unsubDaily) unsubDaily();
         };
     }, []);
 
@@ -111,19 +119,29 @@ export default function Dashboard() {
 
         const monthlyIncome = allIncomes.filter(inc => {
             const d = new Date(inc.date || inc.createdAt);
-            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && inc.credited;
+        }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+
+        const monthlyDailyExpenses = allDailyRecords.filter(r => {
+            const d = new Date(r.date);
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && (r.type === 'Expense' || !r.type);
+        }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+
+        const monthlyDailyIncome = allDailyRecords.filter(r => {
+            const d = new Date(r.date);
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && r.type === 'Income';
         }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
         setSummary({
             total: finalTotal,
             paid,
             percentage: finalTotal > 0 ? (paid / finalTotal) * 100 : 0,
-            monthlyIncome,
-            monthlyExpenses,
+            monthlyIncome: monthlyIncome + monthlyDailyIncome,
+            monthlyExpenses: monthlyExpenses + monthlyDailyExpenses,
             totalInvested: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.principal) || 0), 0),
             expectedMaturity: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.maturityAmount) || 0), 0)
         });
-    }, [allEmis, allIncomes, allInvestments, selectedMonth, selectedYear]);
+    }, [allEmis, allIncomes, allInvestments, allDailyRecords, selectedMonth, selectedYear]);
 
     const remaining = summary.monthlyIncome - summary.monthlyExpenses;
 
@@ -185,6 +203,35 @@ export default function Dashboard() {
                             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px', fontWeight: '600' }}>Monthly Expenses</div>
                             <div style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>
                                 ₹{(summary.monthlyExpenses || 0).toLocaleString('en-IN')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Daily Tracking Card */}
+                <div 
+                    className="glass-card"
+                    onClick={() => navigate('/daily-expenses')}
+                    style={{ cursor: 'pointer', marginBottom: '16px', borderLeft: '8px solid var(--danger)', background: 'rgba(239, 68, 68, 0.05)' }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <div className="label" style={{ marginBottom: 0 }}>Daily Tracking</div>
+                        <div style={{ fontSize: '20px' }}>🏃</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Monthly Spend</div>
+                            <div style={{ fontSize: '24px', fontWeight: '800' }}>
+                                ₹{(allDailyRecords.filter(r => {
+                                    const d = new Date(r.date);
+                                    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && (r.type === 'Expense' || !r.type);
+                                }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0)).toLocaleString('en-IN')}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Net Balance</div>
+                            <div style={{ fontSize: '24px', fontWeight: '800', color: (summary.monthlyIncome - summary.monthlyExpenses) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                ₹{(summary.monthlyIncome - summary.monthlyExpenses).toLocaleString('en-IN')}
                             </div>
                         </div>
                     </div>

@@ -11,6 +11,7 @@ import Income from './components/Income';
 import Borrowers from './components/Borrowers';
 import Settings from './components/Settings';
 import LoansOverview from './components/LoansOverview';
+import DailyExpenses from './components/DailyExpenses';
 import { isConfigured, auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -112,6 +113,14 @@ function App() {
           element={
             <ProtectedRoute>
               <LoansOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/daily-expenses"
+          element={
+            <ProtectedRoute>
+              <DailyExpenses />
             </ProtectedRoute>
           }
         />

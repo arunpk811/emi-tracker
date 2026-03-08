@@ -9,11 +9,12 @@ export default function BottomNav() {
 
     const menuItems = [
         { path: '/tracker', icon: '📊', label: 'Tracker' },
-        { path: '/income', icon: '💰', label: 'Income' },
-        { path: '/borrowers', icon: '🤝', label: 'Lending' }
+        { path: '/daily-expenses', icon: '💸', label: 'Daily' },
+        { path: '/income', icon: '💰', label: 'Income' }
     ];
 
     const moreMenuItems = [
+        { path: '/borrowers', icon: '🤝', label: 'Lending' },
         { path: '/investments', icon: '🌱', label: 'Investments' },
         { path: '/upload', icon: '📂', label: 'Import' },
         { path: '/add-schedule', icon: '📅', label: 'Schedule' },
