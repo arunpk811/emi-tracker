@@ -20,7 +20,7 @@ export default function DailyExpenses() {
 
     const categories = {
         Expense: ['Food', 'Daily', 'Health', 'Toys', 'Skincare', 'Digital Subscription', 'Business', 'Other Expenses'],
-        Income: ['Daily Income', 'Business', 'Other Income']
+        Income: ['Daily Income', 'Business', 'Borrow', 'Other Income']
     };
 
     useEffect(() => {
