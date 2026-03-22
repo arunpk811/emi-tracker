@@ -19,8 +19,8 @@ export default function DailyExpenses() {
     const [editingId, setEditingId] = useState(null);
 
     const categories = {
-        Expense: ['Food', 'Daily', 'Health', 'Toys', 'Skincare', 'Digital Subscription', 'Other Expenses'],
-        Income: ['Daily Income', 'Other Income']
+        Expense: ['Food', 'Daily', 'Health', 'Toys', 'Skincare', 'Digital Subscription', 'Business', 'Other Expenses'],
+        Income: ['Daily Income', 'Business', 'Other Income']
     };
 
     useEffect(() => {
