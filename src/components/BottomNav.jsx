@@ -14,6 +14,7 @@ export default function BottomNav() {
     ];
 
     const moreMenuItems = [
+        { path: '/business', icon: '💼', label: 'Business' },
         { path: '/borrowers', icon: '🤝', label: 'Lending' },
         { path: '/investments', icon: '🌱', label: 'Investments' },
         { path: '/upload', icon: '📂', label: 'Import' },

@@ -12,6 +12,7 @@ import Borrowers from './components/Borrowers';
 import Settings from './components/Settings';
 import LoansOverview from './components/LoansOverview';
 import DailyExpenses from './components/DailyExpenses';
+import BusinessDashboard from './components/BusinessDashboard';
 import { isConfigured, auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -121,6 +122,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DailyExpenses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/business"
+          element={
+            <ProtectedRoute>
+              <BusinessDashboard />
             </ProtectedRoute>
           }
         />
