@@ -83,7 +83,6 @@ export default function DailyExpenses() {
 
             setAmount('');
             setName('');
-            setDate(today);
             setCategory(type === 'Expense' ? 'Daily' : 'Daily Income');
         } catch (error) {
             console.error("Error saving record:", error);
@@ -243,7 +242,6 @@ export default function DailyExpenses() {
                                     setEditingId(null);
                                     setAmount('');
                                     setName('');
-                                    setDate(today);
                                     setType('Expense');
                                     setCategory('Daily');
                                 }}
