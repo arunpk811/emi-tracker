@@ -33,7 +33,8 @@ export default function Dashboard() {
             invested: 0
         },
         totalInvested: 0,
-        expectedMaturity: 0
+        expectedMaturity: 0,
+        categoryBreakdown: []
     });
 
     useEffect(() => {
@@ -150,6 +151,21 @@ export default function Dashboard() {
             return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && r.type === 'Income';
         }).reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
+        const categoryGrouping = {};
+        const currentMonthDailyExpenses = allDailyRecords.filter(r => {
+            const d = new Date(r.date);
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && (r.type === 'Expense' || !r.type);
+        });
+
+        currentMonthDailyExpenses.forEach(r => {
+            const cat = r.category || 'Other Expenses';
+            categoryGrouping[cat] = (categoryGrouping[cat] || 0) + (parseFloat(r.amount) || 0);
+        });
+
+        const sortedCategories = Object.entries(categoryGrouping)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+
         const monthlyInvestmentsList = allInvestments.filter(inv => {
             const d = new Date(inv.date || inv.createdAt);
             return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
@@ -173,7 +189,8 @@ export default function Dashboard() {
                 invested: monthlyInvestedAmount
             },
             totalInvested: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.principal) || 0), 0),
-            expectedMaturity: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.maturityAmount) || 0), 0)
+            expectedMaturity: allInvestments.reduce((acc, curr) => acc + (parseFloat(curr.maturityAmount) || 0), 0),
+            categoryBreakdown: sortedCategories
         });
     }, [allEmis, allIncomes, allInvestments, allDailyRecords, selectedMonth, selectedYear]);
 
@@ -341,6 +358,32 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
+
+                {/* Category Breakdown Section */}
+                {summary.categoryBreakdown.length > 0 && (
+                    <div className="glass-card" style={{ marginBottom: '24px' }}>
+                        <div className="label" style={{ marginBottom: '16px' }}>Expense by Category</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {summary.categoryBreakdown.map((cat, idx) => (
+                                <div key={cat.name}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '14px' }}>
+                                        <div style={{ fontWeight: '600' }}>{cat.name}</div>
+                                        <div style={{ fontWeight: '700' }}>₹{cat.value.toLocaleString('en-IN')}</div>
+                                    </div>
+                                    <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{
+                                            width: `${(cat.value / summary.breakingDown.dailyExpenses) * 100}%`,
+                                            height: '100%',
+                                            background: idx === 0 ? 'var(--primary)' : 'var(--text-secondary)',
+                                            opacity: Math.max(0.3, 1 - (idx * 0.15)),
+                                            borderRadius: '10px'
+                                        }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* 2. Loan Progress */}
                 <div
